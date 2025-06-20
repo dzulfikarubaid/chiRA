@@ -233,7 +233,7 @@ if __name__ == "__main__":
                         angles_to_target = calculate_angles(obj_x_cm, obj_y_cm, obj_z_cm)
                         print(f"Sudut target: {angles_to_target}")
                         if not np.isnan(angles_to_target).any():
-                            send_serial_command(ser, "HelloWorld", angles_to_target[:3], INITIAL_EE_ANGLE)
+                            send_serial_command(ser, "MOVE_ROBOT_ARM", angles_to_target[:3], INITIAL_EE_ANGLE)
                             robot_state = "MOVING_TO_OBJECT"
                             send_status_to_firebase(robot_state, angles=angles_to_target[:3], ee_angle=INITIAL_EE_ANGLE)
                             move_start_time = time.time()
@@ -253,7 +253,7 @@ if __name__ == "__main__":
                     print("Mencengkram objek...")
                     send_status_to_firebase("GRABBING_OBJECT", angles=angles_to_target[:3], ee_angle=GRAB_EE_ANGLE)
                     if 'angles_to_target' in locals() and not np.isnan(angles_to_target).any():
-                        send_serial_command(ser, "HelloWorld", angles_to_target[:3], GRAB_EE_ANGLE)
+                        send_serial_command(ser, "MOVE_ROBOT_ARM", angles_to_target[:3], GRAB_EE_ANGLE)
                         robot_state = "GRABBING"
                         send_status_to_firebase(robot_state, angles=angles_to_target[:3], ee_angle=GRAB_EE_ANGLE)
                         grab_start_time = time.time()
@@ -266,7 +266,7 @@ if __name__ == "__main__":
                 send_status_to_firebase(robot_state)
                 if time.time() - grab_start_time > 1:
                     print("Kembali ke posisi awal (EE tertutup)...")
-                    send_serial_command(ser, "HelloWorld", INITIAL_ANGLES, GRAB_EE_ANGLE)
+                    send_serial_command(ser, "MOVE_ROBOT_ARM", INITIAL_ANGLES, GRAB_EE_ANGLE)
                     robot_state = "RETURNING"
                     send_status_to_firebase(robot_state, angles=INITIAL_ANGLES, ee_angle=GRAB_EE_ANGLE)
                     return_start_time = time.time()
@@ -274,7 +274,7 @@ if __name__ == "__main__":
                 send_status_to_firebase(robot_state)
                 if time.time() - return_start_time > 1:
                     print("Membuka end effector di posisi awal...")
-                    send_serial_command(ser, "HelloWorld", INITIAL_ANGLES, INITIAL_EE_ANGLE)
+                    send_serial_command(ser, "MOVE_ROBOT_ARM", INITIAL_ANGLES, INITIAL_EE_ANGLE)
                     robot_state = "OPENING"
                     send_status_to_firebase(robot_state, angles=INITIAL_ANGLES, ee_angle=INITIAL_EE_ANGLE)
                     open_start_time = time.time()
@@ -291,7 +291,7 @@ if __name__ == "__main__":
             break
 
     if ser is not None:
-        send_serial_command(ser, "HelloWorld", INITIAL_ANGLES, INITIAL_EE_ANGLE)
+        send_serial_command(ser, "MOVE_ROBOT_ARM", INITIAL_ANGLES, INITIAL_EE_ANGLE)
         ser.close()
     cap_left.release()
     cap_right.release()
