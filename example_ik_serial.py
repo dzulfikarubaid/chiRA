@@ -2,14 +2,7 @@ import numpy as np
 import serial
 import time
 from inverse_kinematics import calculate_angles
-
-SERIAL_PORT = 'COM5'
-BAUD_RATE = 115200
-TIME_OUT = 2
-
-EE_OPEN_ANGLE = 90.0
-
-INITIAL_ANGLES = (0.0, 80.0, 160.0)
+import config
 
 def send_serial_command(ser_connection, command_type, angles, ee_angle, move_time=1000):
     if not ser_connection or not ser_connection.is_open:
@@ -45,15 +38,15 @@ def send_serial_command(ser_connection, command_type, angles, ee_angle, move_tim
 if __name__ == "__main__":
     ser = None
     try:
-        ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=TIME_OUT)
-        print(f"Terhubung ke port serial: {SERIAL_PORT}")
+        ser = serial.Serial(config.SERIAL_PORT, config.BAUD_RATE, timeout=config.SERIAL_TIMEOUT)
+        print(f"Terhubung ke port serial: {config.SERIAL_PORT}")
         time.sleep(2)
         print("Arduino terhubung. Mengirim robot ke posisi awal (gripper terbuka)...")
-        send_serial_command(ser, "MOVE_ROBOT_ARM", INITIAL_ANGLES, EE_OPEN_ANGLE)
+        send_serial_command(ser, "MOVE_ROBOT_ARM", config.INITIAL_ANGLES, config.INITIAL_EE_ANGLE)
         time.sleep(3)
 
     except serial.SerialException as e:
-        print(f"Gagal membuka port serial {SERIAL_PORT}: {e}")
+        print(f"Gagal membuka port serial {config.SERIAL_PORT}: {e}")
         print("Pastikan Arduino terhubung dan port yang benar telah dipilih.")
         exit()
 
@@ -78,7 +71,9 @@ if __name__ == "__main__":
 
         print(f"\nMenghitung sudut untuk X={x:.2f}, Y={y:.2f}, Z={z:.2f} cm...")
 
-        theta_1_servo, theta_2_servo, theta_3_servo, is_out_of_reach = calculate_angles(x, y, z)
+        theta_1_servo, theta_2_servo, theta_3_servo, is_out_of_reach = calculate_angles(
+            x, y, z
+        )
         
         calculated_angles = (theta_1_servo, theta_2_servo, theta_3_servo)
 
@@ -87,13 +82,12 @@ if __name__ == "__main__":
         else:
             print(f"Sudut Terhitung: Theta1={calculated_angles[0]:.2f}, "
             f"Theta2={calculated_angles[1]:.2f}, Theta3={calculated_angles[2]:.2f}")
-            send_serial_command(ser, "MOVE_ROBOT_ARM", calculated_angles, EE_OPEN_ANGLE)
+            send_serial_command(ser, "MOVE_ROBOT_ARM", calculated_angles, config.INITIAL_EE_ANGLE)
             time.sleep(2)
 
-               
     if ser and ser.is_open:
         print("Mengembalikan robot ke posisi awal sebelum menutup port serial...")
-        send_serial_command(ser, "MOVE_ROBOT_ARM", INITIAL_ANGLES, EE_OPEN_ANGLE)
+        send_serial_command(ser, "MOVE_ROBOT_ARM", config.INITIAL_ANGLES, config.INITIAL_EE_ANGLE)
         time.sleep(2)
         ser.close()
         print("Port serial ditutup.")

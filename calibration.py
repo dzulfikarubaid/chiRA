@@ -16,8 +16,8 @@ objpoints = []
 imgpoints_l = []
 imgpoints_r = []
 
-images_left = sorted(glob.glob('./captures/left*.jpg'))
-images_right = sorted(glob.glob('./captures/right*.jpg'))
+images_left = sorted(glob.glob('./captures1/left*.jpg'))
+images_right = sorted(glob.glob('./captures1/right*.jpg'))
 
 print("Left images:", images_left)
 print("Right images:", images_right)
@@ -68,22 +68,22 @@ for img_l_path, img_r_path in zip(images_left, images_right):
         imgpoints_l.append(new_corners_l)
         img_l_drawn = cv2.drawChessboardCorners(img_l.copy(), CHESSBOARD_SIZE, new_corners_l, ret_l)
         cv2.imshow('Left Chessboard Detected', img_l_drawn)
-        cv2.imwrite(os.path.join(debug_folder, f'debug_{base_l}'), img_l_drawn)
+        # cv2.imwrite(os.path.join(debug_folder, f'debug_{base_l}'), img_l_drawn)
     else:
         print(f"Chessboard not detected in left image: {img_l_path}")
         cv2.imshow('Left Chessboard Detected', img_l)
-        cv2.imwrite(os.path.join(debug_folder, f'debug_{base_l}'), img_l)
+        # cv2.imwrite(os.path.join(debug_folder, f'debug_{base_l}'), img_l)
 
     if ret_r:
         new_corners_r = cv2.cornerSubPix(gray_r, corners_r, (11, 11), (-1, -1), criteria)
         imgpoints_r.append(new_corners_r)
         img_r_drawn = cv2.drawChessboardCorners(img_r.copy(), CHESSBOARD_SIZE, new_corners_r, ret_r)
         cv2.imshow('Right Chessboard Detected', img_r_drawn)
-        cv2.imwrite(os.path.join(debug_folder, f'debug_{base_r}'), img_r_drawn)
+        # cv2.imwrite(os.path.join(debug_folder, f'debug_{base_r}'), img_r_drawn)
     else:
         print(f"Chessboard not detected in right image: {img_r_path}")
         cv2.imshow('Right Chessboard Detected', img_r)
-        cv2.imwrite(os.path.join(debug_folder, f'debug_{base_r}'), img_r)
+        # cv2.imwrite(os.path.join(debug_folder, f'debug_{base_r}'), img_r)
 
     cv2.waitKey(500)
 cv2.destroyAllWindows()
@@ -148,13 +148,12 @@ def rectify_images_and_display(img_l_path, img_r_path, output_path='rectified_di
 
     base_l = os.path.basename(img_l_path)
     base_r = os.path.basename(img_r_path)
-    cv2.imwrite(os.path.join(output_path, f'rect_{base_l}'), img_l_rect)
-    cv2.imwrite(os.path.join(output_path, f'rect_{base_r}'), img_r_rect)
-    cv2.imwrite(os.path.join(output_path, f'combined_rect_{base_l}'), combined_rect)
+    # cv2.imwrite(os.path.join(output_path, f'rect_{base_l}'), img_l_rect)
+    # cv2.imwrite(os.path.join(output_path, f'rect_{base_r}'), img_r_rect)
+    # cv2.imwrite(os.path.join(output_path, f'combined_rect_{base_l}'), combined_rect)
 
     cv2.imshow('Rectified Images with Epipolar Lines', combined_rect)
-    print(f"Rectified images saved to {output_path}")
-    cv2.waitKey(0)
+
 
 
 print("\n--- Menampilkan Gambar yang Direktifikasi ---")

@@ -1,6 +1,8 @@
 import numpy as np
 
-def calculate_angles(x, y, z, l1 = 9.2, l2=13.5, l3=14.7, l4=8.7):
+import config
+
+def calculate_angles(x, y, z, l1 = config.L1, l2=config.L2, l3=config.L3, l4=config.L4):
     theta_1 = np.arctan2(y, x)
     a = np.sqrt(x**2 + y**2)
     b = a - l4
@@ -21,7 +23,14 @@ def calculate_angles(x, y, z, l1 = 9.2, l2=13.5, l3=14.7, l4=8.7):
     theta_2_servo = 180 - theta_2_deg
     theta_3_servo = theta_2_deg + theta_3_deg
     
-    is_out_of_reach = theta_1_servo < 0 or theta_1_servo > 180 or theta_2_servo < 55 or theta_2_servo > 165 or theta_3_servo < 125 or theta_3_servo > 180
+    is_out_of_reach = (
+        np.isnan(theta_1_servo) or 
+        np.isnan(theta_2_servo) or 
+        np.isnan(theta_3_servo) or 
+        theta_1_servo < 0 or theta_1_servo > 180 or 
+        theta_2_servo < 55 or theta_2_servo > 165 or 
+        theta_3_servo < 125 or theta_3_servo > 180
+    )
 
     return theta_1_servo, theta_2_servo, theta_3_servo, is_out_of_reach
 

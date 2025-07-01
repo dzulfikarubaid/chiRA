@@ -1,10 +1,11 @@
 
 
+import config
 from object_detection import detect_objects
 
 
 if __name__ == '__main__':
-    model_file = "models/si_mod_100_64_s.pt"
+    model_file = config.MODEL_PATH 
     detect_objects(model_path=model_file, source="camera")
 
     # image_to_detect = "images/1.png"

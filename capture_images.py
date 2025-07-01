@@ -54,4 +54,4 @@ def capture_stereo_images(left_camera_index=0, right_camera_index=1, output_fold
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    capture_stereo_images(left_camera_index=0, right_camera_index=1, output_folder='./captures')
+    capture_stereo_images(left_camera_index=0, right_camera_index=1, output_folder='./captures1')
