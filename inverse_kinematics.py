@@ -3,6 +3,9 @@ import numpy as np
 import config
 
 def calculate_angles(x, y, z, l1 = config.L1, l2=config.L2, l3=config.L3, l4=config.L4):
+    # if(z>15):
+    #     z = z +2.8
+    #     x = x + 2
     theta_1 = np.arctan2(y, x)
     a = np.sqrt(x**2 + y**2)
     b = a - l4

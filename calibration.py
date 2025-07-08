@@ -16,8 +16,8 @@ objpoints = []
 imgpoints_l = []
 imgpoints_r = []
 
-images_left = sorted(glob.glob('./captures1/left*.jpg'))
-images_right = sorted(glob.glob('./captures1/right*.jpg'))
+images_left = sorted(glob.glob('./captures3/left*.jpg'))
+images_right = sorted(glob.glob('./captures3/right*.jpg'))
 
 print("Left images:", images_left)
 print("Right images:", images_right)

@@ -10,6 +10,7 @@ import requests
 from inverse_kinematics import calculate_angles
 import datetime
 import config
+from maturity_detection import detect_maturity, get_chili_maturity
 
 cred = credentials.Certificate(config.FIREBASE_CREDENTIAL_PATH)
 firebase_admin.initialize_app(cred, {
@@ -210,34 +211,94 @@ if __name__ == "__main__":
             center_L = ((x1L + x2L) // 2, (y1L + y2L) // 2)
             center_R = ((x1R + x2R) // 2, (y1R + y2R) // 2)
             distance_m = calculate_distance(center_L, center_R, Q)
-
-            cv2.rectangle(annotated_rectifiedL, (x1L, y1L), (x2L, y2L), (200, 0, 200), 2)
-            cv2.rectangle(annotated_rectifiedR, (x1R, y1R), (x2R, y2R), (200, 0, 200), 2)
-            cv2.circle(annotated_rectifiedL, center_L, 5, (0, 100, 255), -1)
-
-            if distance_m is not None:
-                X_m, Y_m, Z_m = distance_m
-                detected_object_position_m = (X_m, Y_m, Z_m)
-                robot_z_cm = -Z_m * 100 - config.Z_ADJUSTMENT
-                robot_x_cm = X_m * 100
-                robot_y_cm = Y_m * 100 + config.Y_ADJUSTMENT
-                detected_object_position_cm = (robot_x_cm, robot_y_cm, robot_z_cm)
+            
+            hL, wL = y2L - y1L, x2L - x1L
+            start_hL = int(hL * 0.45)
+            end_hL = int(hL * 0.55)
+            start_wL = int(wL * 0.45)
+            end_wL = int(wL * 0.55)
+            
+            hR, wR = y2R - y1R, x2R - x1R
+            start_hR = int(hR * 0.45)
+            end_hR = int(hR * 0.55)
+            start_wR = int(wR * 0.45)
+            end_wR = int(wR * 0.55)
+            
+            
+            if start_hL >= end_hL or start_wL >= end_wL:
+                center_region_L = rectifiedL[y1L:y2L, x1L:x2L]
+            else:
+                center_region_L = rectifiedL[y1L + start_hL : y1L + end_hL, x1L + start_wL : x1L + end_wL]
                 
-                if last_object_detection_time is None:
-                    last_object_detection_time = time.time()
+            if start_hR >= end_hR or start_wR >= end_wR:
+                center_region_R = rectifiedR[y1R:y2R, x1R:x2R]
+            else:
+                center_region_R = rectifiedR[y1R + start_hR : y1R + end_hR, x1R + start_wR : x1R + end_wR]
+            
+            ripeness_levelL, text_colorL, bbox_and_bg_colorL = get_chili_maturity(center_region_L) 
+            ripeness_levelR, text_colorR, bbox_and_bg_colorR = get_chili_maturity(center_region_R) 
+            
+            if ripeness_levelL != 'NaN' and ripeness_levelR != 'NaN' and ripeness_levelR == ripeness_levelL:
+                
+                center_box_x1L = x1L + start_wL
+                center_box_y1L = y1L + start_hL
+                center_box_x2L = x1L + end_wL
+                center_box_y2L = y1L + end_hL
+                
+                center_box_x1R = x1R + start_wR
+                center_box_y1R = y1R + start_hR
+                center_box_x2R = x1R + end_wR
+                center_box_y2R = y1R + end_hR
+                
+                cv2.rectangle(annotated_rectifiedL, (x1L, y1L), (x2L, y2L), bbox_and_bg_colorL, 2)
+                cv2.rectangle(annotated_rectifiedR, (x1R, y1R), (x2R, y2R), bbox_and_bg_colorR, 2)
+                
+                cv2.rectangle(annotated_rectifiedL, (center_box_x1L, center_box_y1L), (center_box_x2L, center_box_y2L), bbox_and_bg_colorL, 1)
+                cv2.rectangle(annotated_rectifiedR, (center_box_x1R, center_box_y1R), (center_box_x2R, center_box_y2R), bbox_and_bg_colorR, 1)
 
-                distance_text = f"X:{robot_z_cm:.2f} Y:{robot_x_cm:.2f} Z:{robot_y_cm:.2f} cm"
-                cv2.putText(annotated_rectifiedL, distance_text, (x1L, y1L - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                if distance_m is not None:
+                    X_m, Y_m, Z_m = distance_m
+                    detected_object_position_m = (X_m, Y_m, Z_m)
+                    robot_z_cm = -Z_m * 100 - config.Z_ADJUSTMENT
+                    robot_x_cm = X_m * 100 + config.X_ADJUSTMENT
+                    robot_y_cm = Y_m * 100 + config.Y_ADJUSTMENT
+                    if(robot_z_cm <= 22):
+                        robot_z_cm += 2
+                        robot_y_cm += 3
+                    elif(22 < robot_z_cm < 26.1):
+                        robot_z_cm += 2
+                        robot_y_cm += 2
+                    
+                    detected_object_position_cm = (robot_x_cm, robot_y_cm, robot_z_cm)
+                    
+                    if last_object_detection_time is None:
+                        last_object_detection_time = time.time()
+
+                    distance_text = f"X:{robot_z_cm:.2f} Y:{robot_x_cm:.2f} Z:{robot_y_cm:.2f} cm"
+                    cv2.putText(annotated_rectifiedL, distance_text, (10, 55), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2, cv2.LINE_AA)
+                    
+                    text_position = (10+5, 85+5) 
+                    font = cv2.FONT_HERSHEY_SIMPLEX
+                    font_scale = 0.5
+                    thickness = 2
+                    
+                    (text_width, text_height), baseline = cv2.getTextSize(ripeness_levelL, font, font_scale, thickness)
+                    
+                    rect_top_left = (text_position[0] - 5, text_position[1] - text_height - baseline) 
+                    rect_bottom_right = (text_position[0] + text_width + 5, text_position[1] + baseline + 2)
+                    
+                    cv2.rectangle(annotated_rectifiedL, rect_top_left, rect_bottom_right, bbox_and_bg_colorL, -1)
+                    cv2.putText(annotated_rectifiedL, ripeness_levelL, text_position, font, font_scale, text_colorL, thickness, cv2.LINE_AA)
+                    
+                    break
+            else:
                 break
 
         fps = 1 / (new_frame_time - prev_frame_time)
         prev_frame_time = new_frame_time
         fps_text = f"FPS: {int(fps)}"
-        cv2.putText(annotated_rectifiedL, fps_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+        cv2.putText(annotated_rectifiedL, fps_text, (10, 25), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2, cv2.LINE_AA)
         
-        latency_text_detection = f"Det Latency: {detection_latency*1000:.2f}ms"
-        cv2.putText(annotated_rectifiedL, latency_text_detection, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
-
         try:
             combined_rectified = cv2.hconcat([annotated_rectifiedL, annotated_rectifiedR])
             cv2.imshow("Stereo Rectified with Detection (Left | Right)", combined_rectified)
@@ -263,7 +324,8 @@ if __name__ == "__main__":
 
             if robot_state == "IDLE":
                 send_status_to_firebase(robot_state)
-                if detected_object_position_cm and not object_has_been_picked:
+                # print(detected_object_position_cm)
+                if detected_object_position_cm and not object_has_been_picked and ripeness_levelL != 'Mentah' and config.RUN_ROBOT:
                     obj_x_cm, obj_y_cm, obj_z_cm = detected_object_position_cm
                     send_status_to_firebase("OBJECT_DETECTED", detected_object_position_cm=[obj_x_cm, obj_y_cm, obj_z_cm])
                     try:
@@ -273,7 +335,7 @@ if __name__ == "__main__":
                         ik_latency = ik_end_time - ik_start_time
                         
                         latency_text_ik = f"IK Latency: {ik_latency*1000:.2f}ms"
-                        cv2.putText(annotated_rectifiedL, latency_text_ik, (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
+                        # cv2.putText(annotated_rectifiedL, latency_text_ik, (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2, cv2.LINE_AA)
 
                         angles_to_target = [theta_1_servo, theta_2_servo, theta_3_servo]
                         
